@@ -53,7 +53,8 @@ Errors are captured automatically—no friction. `hook.js` normalizes error sign
 ```
 Session Start
     ↓
-    SessionStart hook fires → injects time + git branch + saved marks
+    SessionStart hook fires → time + git + marks + reflection hints
+    (If >10 reflections pending: "Reflections: 15 pending (run /reflect)")
     ↓
     CLAUDE.md loaded (patterns fresh)
     ↓
@@ -64,6 +65,11 @@ You work normally
 You hit friction → /recall TypeError
     ↓
     Shows: "You hit TypeError+ENOENT together 3x. Root: missing file check."
+    ↓
+You hit stuck → Before abandoning, /recall <error> to check memory
+    ↓
+    If past fix exists → apply it
+    If recurring with no fix → root cause is deeper, try orthogonal approach
     ↓
 You checkpoint → /mark refactor-attempt-1
     ↓
@@ -76,11 +82,12 @@ Later: /reflect
 Next session
     ↓
     SessionStart re-injects patterns + shows: "Last marks: refactor-attempt-1(2h ago)"
+    + Reflection hints if needed
     ↓
     Cycle repeats with accumulated error knowledge
 ```
 
-**Key insight**: Patterns survive because they're re-injected. Errors accumulate because they're appended. Memory persists because marks are checkpointed.
+**Key insight**: Patterns survive because they're re-injected. Errors accumulate because they're appended. Memory persists because marks are checkpointed. Hints guide you toward solving recurring problems.
 
 ---
 
