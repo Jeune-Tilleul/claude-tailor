@@ -13,7 +13,7 @@ const projectRoot = join(__dirname, '..');
  * Mock install process by running install.js in test directory
  */
 function runInstall(testDir, args = []) {
-  const result = spawnSync('node', [join(projectRoot, 'install.js'), ...args], {
+  const result = spawnSync('node', [join(projectRoot, 'src', 'install.js'), ...args], {
     cwd: testDir,
     stdio: 'pipe'
   });

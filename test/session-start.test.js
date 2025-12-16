@@ -4,7 +4,7 @@ import { spawnSync, execSync } from 'child_process';
 import { mkdirSync, rmSync, existsSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-const hookPath = join(process.cwd(), 'session-start.sh');
+const hookPath = join(process.cwd(), 'src', 'session-start.sh');
 const testDir = join(process.cwd(), 'test-session-start');
 
 test.beforeEach(() => {

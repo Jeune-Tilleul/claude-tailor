@@ -110,13 +110,13 @@ async function main() {
       if (!options.force && existsSync(targetCmd)) {
         console.log(`${cmd} already exists (use --force to overwrite)`);
       } else {
-        cpSync(join(__dirname, 'commands', cmd), targetCmd);
+        cpSync(join(__dirname, '..', 'commands', cmd), targetCmd);
       }
     });
   }
 
   // 4. Copy or append CLAUDE.md
-  const templatePath = join(__dirname, 'CLAUDE.md.template');
+  const templatePath = join(__dirname, '..', 'patterns', 'CLAUDE.md.template');
   const targetPath = join(cwd, 'CLAUDE.md');
   const template = readFileSync(templatePath, 'utf-8');
 
