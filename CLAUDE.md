@@ -12,6 +12,31 @@ Budget: <300 LOC total.
 | Refactor | Layered Verification | All 48 tests pass, no behavior change |
 | Complex (3+ approaches) | Generate 2-3, compare tradeoffs | Document chosen approach |
 
+## Task Execution Standards
+
+**Autonomy over caution**: Complete tasks fully without asking for permission on:
+- Obvious follow-ups (if user asks to add a feature, also run tests without asking)
+- Low-risk improvements (formatting, obvious refactoring)
+- Logical next steps (if fixing a bug, also verify related code paths)
+- Repeated actions (don't ask twice for the same type of decision)
+
+**Ask permission ONLY for**:
+- Architectural changes that affect multiple systems
+- Breaking changes to existing code
+- Dangerous operations (force push, deletion, destructive refactoring)
+- Decisions with trade-offs requiring user preference
+- Anything that could cause data loss
+
+**Implementation approach** (Chain-of-Thought):
+1. Think through the full task scope before asking
+2. If 80%+ of the work is clear, proceed autonomously
+3. Flag and ask about the 20% of uncertain decisions, not the whole task
+4. Show reasoning for why each action is appropriate
+
+**Example patterns**:
+- ✓ User: "Add validation" → Also run tests + check related code without asking
+- ✗ User: "Add validation" → Don't ask "Should I also run tests?"
+
 ## Code Generation
 
 **Always Code-First**: Write working code, then explain.
@@ -57,7 +82,21 @@ Use existing 48 tests as templates.
 - Similar micro-adjustments to same function
 - Adding complexity without solving core issue
 
-**Action**: Describe problem fresh. Try orthogonal approach.
+**Action when stuck:**
+1. **Check memory first**: Run `/recall <error_type>` to see if this error occurred before
+   - If past fix exists → apply it to current code
+   - If recurring with no fix → root cause is deeper (change approach needed)
+2. Describe problem fresh (ignore previous 5 attempts)
+3. Try orthogonal approach (different algorithm, different pattern, different design)
+
+**Example:**
+```
+You hit TypeError 3 times in a row trying different fixes.
+→ /recall TypeError
+→ Shows: "TypeError in hook.js (3 days ago): Cause = missing null check before property access"
+→ Apply same null-check pattern to current code
+→ If that doesn't work → root cause is different, abandon this approach entirely
+```
 
 ## Code Review (4 passes)
 
@@ -151,7 +190,7 @@ if (!stdin || stdin.length < 50) process.exit(0);
 
 ## Constraints
 
-**LOC Budget**: <300 total (currently 155)
+**LOC Budget**: <300 total (currently 157)
 - Every line must deliver value
 - Dead code: remove immediately
 - If over budget: remove features, not quality
@@ -165,6 +204,70 @@ if (!stdin || stdin.length < 50) process.exit(0);
 - Before adding feature: find academic evidence
 - If no research supports it: reconsider
 - Apply research to tailor-nano context
+
+## Auto-Reflection (Memory)
+
+**CRITICAL**: You must detect and log errors/feedback to build project memory.
+
+### When to create a reflection
+
+**Technical errors** (detect automatically):
+- ✅ Test failures (npm test, jest, etc.)
+- ✅ Compilation errors (tsc, build failures)
+- ✅ Tool execution errors (Bash exit code != 0)
+- ✅ Runtime errors (TypeError, ReferenceError, ENOENT, etc.)
+
+**User feedback** (detect from user messages):
+- ✅ "non", "no", "stop", "arrête"
+- ✅ "tu aurais dû...", "you should have..."
+- ✅ "mémorise", "retiens", "remember this"
+- ✅ User corrects your approach
+- ✅ User expresses frustration
+- ✅ User rejects your solution
+
+**When NOT to create reflection**:
+- ❌ Minor stylistic preferences
+- ❌ Normal clarification questions
+- ❌ User explicitly says "don't log this"
+
+### How to create a reflection
+
+**APPEND ONLY** - Never read or rewrite the file!
+
+```javascript
+import { appendFileSync } from 'fs';
+
+const reflection = {
+  id: `nano-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  ts: new Date().toISOString(),
+  error_type: "typeerror|enoent|test_failure|user_feedback|etc",
+  snippet: "The actual error message or user feedback",
+  context: {
+    file: "path/to/file.js",
+    operation: "functionName"
+  },
+  signature: "error_type-keyword",  // For clustering similar errors
+  analyzed: true,
+  analysis: {
+    root_cause: "Why this happened",
+    pattern: "Is this recurring? Related to other errors?",
+    fix_applied: "What I did to fix it",
+    prevention: "How to avoid next time",
+    severity: "low|medium|high",
+    related_errors: []
+  }
+};
+
+appendFileSync('.claude-tailor/memory/reflections.jsonl', JSON.stringify(reflection) + '\n');
+```
+
+### To check recent errors (if needed)
+
+```bash
+tail -5 .claude-tailor/memory/reflections.jsonl
+```
+
+**NEVER** use `readFileSync` on the whole file unless user explicitly asks.
 
 ## Commits
 
@@ -197,6 +300,38 @@ Before final submission:
 1. Generate solution
 2. Self-critique: complexity justified? Edge cases? Test coverage?
 3. Refine based on critique
+
+**Integration with reflections system**:
+- After self-critique reveals a recurring pattern → Create reflection
+- Before starting similar task → Read recent reflections to avoid past mistakes
+- If stuck (Stuck Detection triggered) → Check reflections for similar issues
+
+**Harmonization with other patterns**:
+
+| Pattern | How Reflections Help |
+|---------|---------------------|
+| **Test-Driven Repair** | Reflections capture why bugs happened, improving test quality |
+| **Stuck Detection** | Reflections identify recurring stuck patterns → better abandonment decisions |
+| **Code-First** | Reflections document why certain approaches failed → faster future decisions |
+| **SCoT** | Past reflections inform UNDERSTAND phase with historical context |
+| **Self-Improvement** | Reflections provide concrete data for critique instead of speculation |
+
+**Workflow integration**:
+```
+1. Task arrives
+   ↓
+2. Read recent reflections (context from past mistakes)
+   ↓
+3. Apply pattern (Test-Driven, SCoT, etc.)
+   ↓
+4. Error occurs → Hook captures
+   ↓
+5. Fix error → Add analysis to reflection
+   ↓
+6. Self-critique → Check if new patterns emerged
+   ↓
+7. Next task → Benefits from accumulated wisdom
+```
 
 ## Context Management
 
