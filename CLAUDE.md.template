@@ -1,0 +1,259 @@
+# tailor-nano Development Patterns
+
+## Decision Framework
+
+**Task Type determines approach:**
+
+| Task | Primary Pattern | Verification |
+|------|----------------|--------------|
+| New feature | SCoT + Code-First | Tests pass, requirements met |
+| Bug fix | Test-Driven Repair | Failing test becomes passing |
+| Refactor | Layered Verification | All tests pass, no behavior change |
+| Complex problem (3+ approaches) | Generate 2-3 approaches, compare tradeoffs, select best | Document why alternative chosen |
+
+## Code Generation
+
+**Always Code-First**: Write working code, then explain.
+
+```
+// DO: Code first
+function solve(input) { return result; }
+// Then explain approach
+
+// DON'T: Long explanation, then code
+```
+
+**SCoT for complex tasks** (4 steps, in order):
+1. UNDERSTAND - requirements, constraints, dependencies
+2. DESIGN - architecture, components, error paths
+3. IMPLEMENT - one component at a time
+4. VERIFY - edge cases, error paths, requirements
+
+## Bug Fixing
+
+**Test-Driven Repair** (mandatory for bugs):
+1. Write failing test that reproduces bug
+2. Confirm test fails for correct reason
+3. Fix code
+4. Confirm test passes
+5. Commit test + fix together
+
+## Stuck Detection
+
+**After 3 occurrences of same error**: Different approach required.
+
+**After 5 failed attempts**: STOP current strategy.
+
+**Signs of being stuck:**
+- Same error repeating
+- Similar changes without progress
+- Increasing complexity without clarity
+
+**Action**: Describe problem fresh. Try orthogonal approach.
+
+## Code Review (4 passes)
+
+1. **Analyze** - What does it do?
+2. **Reason** - Why this design?
+3. **Verify** - Edge cases handled?
+4. **Refine** - Can it be simpler?
+
+Do not combine passes.
+
+## Quality Thresholds
+
+| Metric | Limit | Action when exceeded |
+|--------|-------|---------------------|
+| File size | 400 lines | Split by responsibility |
+| Function size | 30 lines | Extract helpers |
+| Nesting depth | 3 levels | Use guard clauses |
+
+**BAD: deep nesting**
+```javascript
+function process(data) {
+  if (data) {
+    if (data.isValid) {
+      if (data.items.length > 0) {
+        // logic buried deep
+      }
+    }
+  }
+}
+```
+
+**Guard clause pattern:**
+```javascript
+function process(data) {
+  if (!data) return;
+  if (!data.isValid) return;
+  if (data.items.length === 0) return;
+  // main logic at top level
+}
+```
+
+## Testing
+
+**Structure**: Arrange-Act-Assert
+```javascript
+test('description', () => {
+  // Arrange
+  const input = createTestData();
+  // Act
+  const result = functionUnderTest(input);
+  // Assert
+  expect(result).toBe(expected);
+});
+```
+
+**Principles:**
+- Test behavior, not implementation
+- One assertion per test (prefer)
+- Tests must be independent
+
+## Error Handling
+
+**Never silently fail:**
+```javascript
+// BAD
+try { riskyOp(); } catch {}
+
+// GOOD
+try { riskyOp(); } catch (e) {
+  console.error('Failed:', e.message);
+  throw e;
+}
+```
+
+**Fail fast**: Validate inputs at function entry.
+
+## Auto-Reflection (Memory)
+
+**CRITICAL**: You must detect and log errors/feedback to build project memory.
+
+### When to create a reflection
+
+**Technical errors** (detect automatically):
+- ✅ Test failures (npm test, jest, etc.)
+- ✅ Compilation errors (tsc, build failures)
+- ✅ Tool execution errors (Bash exit code != 0)
+- ✅ Runtime errors (TypeError, ReferenceError, ENOENT, etc.)
+
+**User feedback** (detect from user messages):
+- ✅ "non", "no", "stop", "arrête"
+- ✅ "tu aurais dû...", "you should have..."
+- ✅ "mémorise", "retiens", "remember this"
+- ✅ User corrects your approach
+- ✅ User expresses frustration
+- ✅ User rejects your solution
+
+**When NOT to create reflection**:
+- ❌ Minor stylistic preferences
+- ❌ Normal clarification questions
+- ❌ User explicitly says "don't log this"
+
+### How to create a reflection
+
+**APPEND ONLY** - Never read or rewrite the file!
+
+```javascript
+import { appendFileSync } from 'fs';
+
+const reflection = {
+  id: `nano-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  ts: new Date().toISOString(),
+  error_type: "typeerror|enoent|test_failure|user_feedback|etc",
+  snippet: "The actual error message or user feedback",
+  context: {
+    file: "path/to/file.js",
+    operation: "functionName"
+  },
+  signature: "error_type-keyword",  // For clustering similar errors
+  analyzed: true,
+  analysis: {
+    root_cause: "Why this happened",
+    pattern: "Is this recurring? Related to other errors?",
+    fix_applied: "What I did to fix it",
+    prevention: "How to avoid next time",
+    severity: "low|medium|high",
+    related_errors: []
+  }
+};
+
+appendFileSync('.claude-tailor/memory/reflections.jsonl', JSON.stringify(reflection) + '\n');
+```
+
+### To check recent errors (if needed)
+
+```bash
+tail -5 .claude-tailor/memory/reflections.jsonl
+```
+
+**NEVER** use `readFileSync` on the whole file unless user explicitly asks.
+
+## Commits
+
+**Format:**
+```
+type: description (50 chars max)
+
+Why this change was needed.
+```
+
+**Types**: feat, fix, refactor, test, docs, chore
+
+**Rule**: One logical change per commit.
+
+## Self-Improvement Loop
+
+**For complex solutions**, before final submission:
+1. Generate solution
+2. Self-critique: flaws, edge cases, inefficiencies
+3. Refine based on critique
+
+**Integration with reflections system**:
+- After self-critique reveals a recurring pattern → Create reflection
+- Before starting similar task → Read recent reflections to avoid past mistakes
+- If stuck (Stuck Detection triggered) → Check reflections for similar issues
+
+**Harmonization with other patterns**:
+
+| Pattern | How Reflections Help |
+|---------|---------------------|
+| **Test-Driven Repair** | Reflections capture why bugs happened, improving test quality |
+| **Stuck Detection** | Reflections identify recurring stuck patterns → better abandonment decisions |
+| **Code-First** | Reflections document why certain approaches failed → faster future decisions |
+| **SCoT** | Past reflections inform UNDERSTAND phase with historical context |
+| **Self-Improvement** | Reflections provide concrete data for critique instead of speculation |
+
+**Workflow integration**:
+```
+1. Task arrives
+   ↓
+2. Read recent reflections (context from past mistakes)
+   ↓
+3. Apply pattern (Test-Driven, SCoT, etc.)
+   ↓
+4. Error occurs → Hook captures
+   ↓
+5. Fix error → Add analysis to reflection
+   ↓
+6. Self-critique → Check if new patterns emerged
+   ↓
+7. Next task → Benefits from accumulated wisdom
+```
+
+## Context Management
+
+**Include only:**
+- Files being modified
+- Immediate dependencies
+- Relevant test files
+
+**Exclude:**
+- Debug logs from previous attempts
+- Unrelated code
+- Verbose explanations of obvious things
+
+---
+
+Error patterns tracked in `.claude-tailor/memory/reflections.jsonl`. Use `/nano-status` for trends.

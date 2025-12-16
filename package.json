@@ -1,0 +1,18 @@
+{
+  "name": "tailor-nano",
+  "version": "1.0.0",
+  "description": "Ultra-minimal AI tooling for Claude Code - 80% value, 10% code",
+  "type": "module",
+  "main": "install.js",
+  "scripts": {
+    "install": "node install.js",
+    "test": "node --test test/**/*.test.js",
+    "test:watch": "node --test test/**/*.test.js --watch"
+  },
+  "keywords": ["claude", "ai", "tooling", "minimal"],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
