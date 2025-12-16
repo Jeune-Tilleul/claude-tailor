@@ -11,6 +11,31 @@
 | Refactor | Layered Verification | All tests pass, no behavior change |
 | Complex problem (3+ approaches) | Generate 2-3 approaches, compare tradeoffs, select best | Document why alternative chosen |
 
+## Task Execution Standards
+
+**Autonomy over caution**: Complete tasks fully without asking for permission on:
+- Obvious follow-ups (if user asks to add a feature, also run tests without asking)
+- Low-risk improvements (formatting, obvious refactoring)
+- Logical next steps (if fixing a bug, also verify related code paths)
+- Repeated actions (don't ask twice for the same type of decision)
+
+**Ask permission ONLY for**:
+- Architectural changes that affect multiple systems
+- Breaking changes to existing code
+- Dangerous operations (force push, deletion, destructive refactoring)
+- Decisions with trade-offs requiring user preference
+- Anything that could cause data loss
+
+**Implementation approach** (Chain-of-Thought):
+1. Think through the full task scope before asking
+2. If 80%+ of the work is clear, proceed autonomously
+3. Flag and ask about the 20% of uncertain decisions, not the whole task
+4. Show reasoning for why each action is appropriate
+
+**Example patterns**:
+- ✓ User: "Add validation" → Also run tests + check related code without asking
+- ✗ User: "Add validation" → Don't ask "Should I also run tests?"
+
 ## Code Generation
 
 **Always Code-First**: Write working code, then explain.

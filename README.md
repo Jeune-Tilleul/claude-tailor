@@ -239,34 +239,35 @@ tailor-nano/
 ├── CLAUDE.md                  # Development instructions
 │
 ├── src/                       # Core implementation
-│   ├── install.js            # Installation script
-│   ├── hook.js               # Error capture logic
-│   └── session-start.sh       # Session initialization
+│   ├── install.js            # Installs hook into .claude/settings.local.json + initializes .claude-tailor/
+│   ├── hook.js               # Runs on error: parses stderr, extracts error signature, appends reflection
+│   └── session-start.sh       # Called at session start: re-injects patterns from template into CLAUDE.md
 │
-├── commands/                  # Claude Code slash commands
-│   ├── mark.md              # Save/restore progress
-│   ├── recall.md            # Search error history
-│   ├── test.md              # Run tests
-│   └── reflect.md           # Pattern reflection
+├── commands/                  # Claude Code slash commands (installed into .claude/commands/)
+│   ├── mark.md              # `/mark <name>` - Save checkpoint (compact JSONL) with decision summary
+│   ├── recall.md            # `/recall <keyword>` - Search .claude-tailor/memory for past errors + co-occurrence patterns
+│   ├── test.md              # `/test` - Run tests + git status (verifies current work state)
+│   └── reflect.md           # `/reflect` - Analyze unanalyzed errors for root causes + patterns
 │
-├── test/                      # Test suite (68 tests)
+├── test/                      # Test suite (68 tests) - validates install, hook, session-start, commands
 │   ├── install.test.js
 │   ├── hook.test.js
 │   ├── session-start.test.js
 │   ├── nano-status.test.js
 │   └── test-utils.js
 │
-├── docs/                      # Documentation
-│   ├── QUICKSTART.md
-│   ├── DEMO.md
-│   ├── STATS.md
-│   ├── COMPARISON.md
-│   ├── VALIDATION.md
-│   ├── INDEX.md
-│   └── SUMMARY.txt
+├── docs/                      # Documentation + validation reports
+│   ├── QUICKSTART.md        # How to install and use tailor-nano
+│   ├── DEMO.md              # Real-world example workflow
+│   ├── STATS.md             # Performance metrics + memory overhead
+│   ├── COMPARISON.md        # Comparison with other reflection systems
+│   ├── VALIDATION.md        # How patterns were tested + academic citations
+│   ├── INDEX.md             # Full command reference
+│   └── SUMMARY.txt          # One-page summary
 │
-└── patterns/                  # Pattern templates
-    └── CLAUDE.md.template
+├── templates/                 # **CRITICAL**: Master pattern template
+│   └── CLAUDE.md.template   # Decision Framework, Task Execution Standards, Bug Fixing, Stuck Detection, Code Review, Self-Improvement Loop
+│                             # SOURCE OF TRUTH for all Claude Code behavior patterns
 ```
 
 ## Uninstall
