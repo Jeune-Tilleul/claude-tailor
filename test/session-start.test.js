@@ -197,3 +197,116 @@ test('session-start - shows marks when progress files exist', () => {
   assert.ok(context.includes('Marks:'), 'Should show Marks section');
   assert.ok(context.includes('auth'), 'Should include progress file name');
 });
+
+test('session-start - shows reflection hint when >10 unanalyzed', () => {
+  // Create memory directory with 15 unanalyzed reflections
+  const memoryDir = join(testDir, '.claude-tailor', 'memory');
+  mkdirSync(memoryDir, { recursive: true });
+
+  let reflectionsContent = '';
+  for (let i = 0; i < 15; i++) {
+    reflectionsContent += `{"id":"${i}","error_type":"typeerror"}\n`;
+  }
+  writeFileSync(join(memoryDir, 'reflections.jsonl'), reflectionsContent);
+
+  const result = runHook(testDir);
+  const output = JSON.parse(result.stdout);
+  const context = output.hookSpecificOutput.additionalContext;
+
+  assert.ok(context.includes('Reflections:'), 'Should show Reflections section');
+  assert.ok(context.includes('15 pending'), 'Should show count of unanalyzed');
+  assert.ok(context.includes('/reflect'), 'Should suggest /reflect command');
+});
+
+test('session-start - hides reflection hint when ≤10 unanalyzed', () => {
+  // Create memory directory with 10 unanalyzed reflections (boundary)
+  const memoryDir = join(testDir, '.claude-tailor', 'memory');
+  mkdirSync(memoryDir, { recursive: true });
+
+  let reflectionsContent = '';
+  for (let i = 0; i < 10; i++) {
+    reflectionsContent += `{"id":"${i}","error_type":"typeerror"}\n`;
+  }
+  writeFileSync(join(memoryDir, 'reflections.jsonl'), reflectionsContent);
+
+  const result = runHook(testDir);
+  const output = JSON.parse(result.stdout);
+  const context = output.hookSpecificOutput.additionalContext;
+
+  assert.ok(!context.includes('Reflections:'), 'Should NOT show Reflections hint for ≤10');
+  assert.ok(!context.includes('/reflect'), 'Should NOT suggest /reflect');
+});
+
+test('session-start - counts only unanalyzed reflections', () => {
+  // Create memory with 8 unanalyzed + 7 analyzed = 15 total
+  const memoryDir = join(testDir, '.claude-tailor', 'memory');
+  mkdirSync(memoryDir, { recursive: true });
+
+  let reflectionsContent = '';
+  // 8 unanalyzed
+  for (let i = 0; i < 8; i++) {
+    reflectionsContent += `{"id":"${i}","error_type":"typeerror"}\n`;
+  }
+  // 7 analyzed
+  for (let i = 8; i < 15; i++) {
+    reflectionsContent += `{"id":"${i}","error_type":"typeerror","analyzed":true}\n`;
+  }
+  writeFileSync(join(memoryDir, 'reflections.jsonl'), reflectionsContent);
+
+  const result = runHook(testDir);
+  const output = JSON.parse(result.stdout);
+  const context = output.hookSpecificOutput.additionalContext;
+
+  assert.ok(!context.includes('Reflections:'), 'Should NOT show hint (only 8 unanalyzed)');
+});
+
+test('session-start - handles 11 unanalyzed exactly', () => {
+  // Edge case: exactly 11 (minimum to trigger hint)
+  const memoryDir = join(testDir, '.claude-tailor', 'memory');
+  mkdirSync(memoryDir, { recursive: true });
+
+  let reflectionsContent = '';
+  for (let i = 0; i < 11; i++) {
+    reflectionsContent += `{"id":"${i}","error_type":"typeerror"}\n`;
+  }
+  writeFileSync(join(memoryDir, 'reflections.jsonl'), reflectionsContent);
+
+  const result = runHook(testDir);
+  const output = JSON.parse(result.stdout);
+  const context = output.hookSpecificOutput.additionalContext;
+
+  assert.ok(context.includes('Reflections:'), 'Should show hint at boundary (>10)');
+  assert.ok(context.includes('11 pending'), 'Should show exact count');
+});
+
+test('session-start - no crash when reflections file missing', () => {
+  // Create memory directory but NO reflections file
+  const memoryDir = join(testDir, '.claude-tailor', 'memory');
+  mkdirSync(memoryDir, { recursive: true });
+
+  const result = runHook(testDir);
+  assert.strictEqual(result.status, 0, 'Should exit cleanly without reflections file');
+
+  const output = JSON.parse(result.stdout);
+  const context = output.hookSpecificOutput.additionalContext;
+  assert.ok(!context.includes('Reflections:'), 'Should NOT show Reflections hint');
+});
+
+test('session-start - reflection hint appears in systemMessage', () => {
+  // Ensure hint is visible to user in systemMessage, not just additionalContext
+  const memoryDir = join(testDir, '.claude-tailor', 'memory');
+  mkdirSync(memoryDir, { recursive: true });
+
+  let reflectionsContent = '';
+  for (let i = 0; i < 12; i++) {
+    reflectionsContent += `{"id":"${i}","error_type":"error"}\n`;
+  }
+  writeFileSync(join(memoryDir, 'reflections.jsonl'), reflectionsContent);
+
+  const result = runHook(testDir);
+  const output = JSON.parse(result.stdout);
+  const systemMessage = output.systemMessage;
+
+  assert.ok(systemMessage.includes('Reflections:'), 'Hint should appear in systemMessage');
+  assert.ok(systemMessage.includes('12 pending'), 'Should show count in visible message');
+});
