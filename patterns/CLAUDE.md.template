@@ -49,7 +49,21 @@ function solve(input) { return result; }
 - Similar changes without progress
 - Increasing complexity without clarity
 
-**Action**: Describe problem fresh. Try orthogonal approach.
+**Action when stuck:**
+1. **Check memory first**: Run `/recall <error_type>` to see if this error occurred before
+   - If past fix exists → apply it to current code
+   - If recurring with no fix → root cause is deeper (change approach needed)
+2. Describe problem fresh (ignore previous 5 attempts)
+3. Try orthogonal approach (different algorithm, different pattern, different design)
+
+**Example:**
+```
+You hit TypeError 3 times in a row trying different fixes.
+→ /recall TypeError
+→ Shows: "TypeError in auth.js (3 days ago): Cause = missing null check before property access"
+→ Apply same null-check pattern to current code
+→ If that doesn't work → root cause is different, abandon this approach entirely
+```
 
 ## Code Review (4 passes)
 

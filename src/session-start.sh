@@ -60,6 +60,16 @@ if [ -d "$MEMORY_DIR" ]; then
   done
 fi
 
+# Check unanalyzed reflections
+REFLECTIONS_HINT=""
+REFLECTIONS_FILE="$MEMORY_DIR/reflections.jsonl"
+if [ -f "$REFLECTIONS_FILE" ]; then
+  UNANALYZED=$(grep -cv '"analyzed".*true' "$REFLECTIONS_FILE" 2>/dev/null || echo "0")
+  if [ "$UNANALYZED" -gt 10 ]; then
+    REFLECTIONS_HINT=" | Reflections: $UNANALYZED pending (run /reflect)"
+  fi
+fi
+
 # Build context string
 CONTEXT="Time: $TIME | Git: $GIT_STATUS"
 if [ -n "$CHECKPOINTS" ]; then
@@ -67,6 +77,7 @@ if [ -n "$CHECKPOINTS" ]; then
 elif [ -d "$MEMORY_DIR" ]; then
   CONTEXT="$CONTEXT | Marks: none (use /mark <name> to save)"
 fi
+CONTEXT="$CONTEXT$REFLECTIONS_HINT"
 
 # Output JSON with systemMessage (visible) and additionalContext (for Claude)
 cat <<EOF
